@@ -6,7 +6,7 @@
   <depth>0</depth>
   <persistent>0</persistent>
   <parentName>&lt;undefined&gt;</parentName>
-  <maskName>&lt;undefined&gt;</maskName>
+  <maskName>spr_enemy</maskName>
   <events>
     <event eventtype="0" enumb="0">
       <action>
@@ -31,6 +31,10 @@ hsp = 0;
 vsp = 0;
 movespeed = 4;
 hsp_carry = 0;
+
+// support for double-jump
+jumps = 0;
+jumpsmax = 2;
 
 // jumpspeed may vary
 jumpspeed_normal = 7;
@@ -97,21 +101,31 @@ sprite_index = spr_player;
 key_right = keyboard_check(vk_right); //returns 1 if rigth-arrow is being pressed, else 0
 key_left = -keyboard_check(vk_left);
 key_jump = keyboard_check_pressed(vk_space); //returns 1 if space is pressed now but not previous frame
+key_jump_held = keyboard_check(vk_space); //returns 1 if space is still being pressed
 key_down = keyboard_check(vk_down);
 
 //React to inputs
 move = key_left + key_right;
 hsp = move * movespeed;
 if (vsp &lt; 10) vsp += grav; //gravity has terminal velocity of 10, positive y is down
+
+//Jumps
 if (place_meeting(x,y+1,obj_wall)) //only if player is on the floor
 {
-    if (key_jump) vsp = -jumpspeed //jumping is negative y
+    jumps = jumpsmax; //reset available jumps
 }
-
-//Wall jump
-if (key_jump) &amp;&amp; (place_meeting(x+1, y, obj_wall) || place_meeting(x-1, y, obj_wall))
+if (key_jump) &amp;&amp; (jumps &gt; 0) //if player asks to jump
+{
+    vsp = -jumpspeed //jumping is negative y
+    jumps -= 1;
+}
+if (key_jump) &amp;&amp; (place_meeting(x+1, y, obj_wall) || place_meeting(x-1, y, obj_wall)) //wall jump
 {
     vsp = -jumpspeed;
+}
+if (vsp &lt; 0) &amp;&amp; (!key_jump_held)
+{
+    vsp = max(vsp, -jumpspeed/4); //variable jump
 }
 
 //Prep for moving platform carry
